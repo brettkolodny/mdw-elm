@@ -1,16 +1,18 @@
 port module Main exposing (main)
 
-import Accounts exposing (accounts)
 import Browser
 import Extension exposing (selectExtension)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode exposing (Decoder, field, float, map, map2)
-import Model exposing (Model, Route(..))
+import Model exposing (Model, Page(..), Route(..))
 import Msg exposing (Msg(..))
 import NavBar exposing (navBar)
 import Network exposing (networkSelect)
+import Routes.Overview.Update as OverviewUpdate
+import Routes.Overview.View exposing (accounts)
+import Routes.Send.View exposing (send)
 import Session.Model exposing (Account, Network(..), Prices, Usd)
 import Session.Update as SessionUpdate
 
@@ -53,6 +55,7 @@ init extensions =
                 }
             }
       , route = AccountsRoute
+      , page = Send
       }
     , Http.get
         { url = "https://api.coingecko.com/api/v3/simple/price?ids=polkadot%2Ckusama&vs_currencies=usd"
@@ -70,6 +73,18 @@ update msg model =
                     SessionUpdate.update msg_ model.session
             in
             ( { model | session = session }, Cmd.none )
+
+        OverviewMsg msg_ ->
+            let
+                page =
+                    case model.page of
+                        Overview m ->
+                            Overview (OverviewUpdate.update msg_ m)
+
+                        _ ->
+                            model.page
+            in
+            ( { model | page = page }, Cmd.none )
 
         UpdateAccounts accounts ->
             let
@@ -155,15 +170,12 @@ view : Model -> Html Msg
 view model =
     let
         page =
-            case model.route of
-                AccountsRoute ->
-                    accounts
+            case model.page of
+                Overview m ->
+                    accounts model.session m
 
-                SendRoute _ ->
-                    accounts
-
-                NotFoundRoute ->
-                    accounts
+                Send ->
+                    send model.session
     in
     div [ class "flex flex-col justify-center items-center" ]
         [ div [ class "absolute flex flex-row justify-center items-center h-20 w-screen top-0 left-0 " ]
@@ -172,7 +184,7 @@ view model =
                 , selectExtension model.session
                 ]
             ]
-        , div [ class "flex flex-row w-full" ] [ navBar model, page model.session ]
+        , div [ class "flex flex-row w-full" ] [ navBar model, page ]
         ]
 
 

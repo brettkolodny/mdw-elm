@@ -1,4 +1,5 @@
 module Routes.Overview.Model exposing (..)
 
-foo : Int
-foo = 4
+
+type alias Model =
+    List String

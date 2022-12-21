@@ -1,5 +1,6 @@
 module Session.Model exposing (..)
 
+
 type alias Balance =
     { available : Int
     , staked : Int
@@ -8,7 +9,6 @@ type alias Balance =
 
 type alias Account =
     { address : String
-    , show : Bool
     , name : String
     , balance : Maybe Balance
     }

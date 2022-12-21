@@ -1,11 +1,10 @@
 module Session.Update exposing (..)
 
-import Session.Model exposing (Account, Model, Network)
+import Session.Model exposing (Model, Network)
 
 
 type Msg
-    = ToggleAccountInfo String
-    | ToggleShowNetworks
+    = ToggleShowNetworks
     | SwitchNetwork Network
     | ConnectExtension String
     | ToggleShowExtensions
@@ -14,9 +13,6 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        ToggleAccountInfo address ->
-            { model | accounts = List.map (toggleAccount address) model.accounts }
-
         ToggleShowNetworks ->
             let
                 oldNetwork =
@@ -63,12 +59,3 @@ update msg model =
                     { oldExtensionState | showExtensions = not oldExtensionState.showExtensions }
             in
             { model | extension = newExtensionState }
-
-
-toggleAccount : String -> Account -> Account
-toggleAccount address account =
-    if address == account.address then
-        { account | show = not account.show }
-
-    else
-        account
