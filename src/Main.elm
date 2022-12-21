@@ -7,10 +7,11 @@ import Html exposing (Html, div)
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode exposing (Decoder, field, float, map, map2)
-import Model exposing (Account, Model, Network(..), Prices, Route(..), Usd)
+import Model exposing (Model, Route(..))
 import Msg exposing (Msg(..))
 import NavBar exposing (navBar)
 import Network exposing (networkSelect)
+import Session.Model exposing (Account, Network(..), Prices, Usd)
 
 
 main : Program (List String) Model Msg
@@ -40,14 +41,15 @@ port sendMessage : PortMessage -> Cmd msg
 
 init : List String -> ( Model, Cmd Msg )
 init extensions =
-    ( { accounts = []
-      , count = 0
-      , network = { currentNetwork = Polkadot, showNetworks = False }
-      , prices = Nothing
-      , extension =
-            { extensions = extensions
-            , currentExtension = Nothing
-            , showExtensions = False
+    ( { session =
+            { accounts = []
+            , network = { currentNetwork = Polkadot, showNetworks = False }
+            , prices = Nothing
+            , extension =
+                { extensions = extensions
+                , currentExtension = Nothing
+                , showExtensions = False
+                }
             }
       , route = AccountsRoute
       }
@@ -62,25 +64,45 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UpdateAccounts accounts ->
-            ( { model | accounts = accounts }, Cmd.none )
+            let
+                oldSession =
+                    model.session
+
+                newSession =
+                    { oldSession | accounts = accounts }
+            in
+            ( { model | session = newSession }, Cmd.none )
 
         ToggleAccountInfo address ->
-            ( { model | accounts = List.map (toggleAccount address) model.accounts }, Cmd.none )
+            let
+                oldSession =
+                    model.session
+
+                newSession =
+                    { oldSession | accounts = List.map (toggleAccount address) model.session.accounts }
+            in
+            ( { model | session = newSession }, Cmd.none )
 
         ToggleShowNetworks ->
             let
                 oldNetwork =
-                    model.network
+                    model.session.network
 
                 newNetwork =
                     { oldNetwork | showNetworks = not oldNetwork.showNetworks }
+
+                oldSession =
+                    model.session
+
+                newSession =
+                    { oldSession | network = newNetwork }
             in
-            ( { model | network = newNetwork }, Cmd.none )
+            ( { model | session = newSession }, Cmd.none )
 
         SwitchNetwork network ->
             let
                 oldNetwork =
-                    model.network
+                    model.session.network
 
                 newNetwork =
                     { oldNetwork | currentNetwork = network, showNetworks = not oldNetwork.showNetworks }
@@ -94,25 +116,37 @@ update msg model =
                             "Kusama"
 
                 accounts =
-                    List.map (\account -> { account | balance = Nothing }) model.accounts
+                    List.map (\account -> { account | balance = Nothing }) model.session.accounts
+
+                oldSession =
+                    model.session
+
+                newSession =
+                    { oldSession | network = newNetwork, accounts = accounts }
             in
-            ( { model | network = newNetwork, accounts = accounts }
+            ( { model | session = newSession }
             , sendMessage
                 { tag = "network-update"
-                , data = { network = Just networkString, extension = model.extension.currentExtension }
+                , data = { network = Just networkString, extension = model.session.extension.currentExtension }
                 }
             )
 
         ConnectExtension extensionName ->
             let
                 oldExtensionState =
-                    model.extension
+                    model.session.extension
 
                 netExtensionState =
                     { oldExtensionState | currentExtension = Just extensionName, showExtensions = False }
+
+                oldSession =
+                    model.session
+
+                newSession =
+                    { oldSession | extension = netExtensionState }
             in
-            if extensionName /= Maybe.withDefault "" model.extension.currentExtension then
-                ( { model | extension = netExtensionState }
+            if extensionName /= Maybe.withDefault "" model.session.extension.currentExtension then
+                ( { model | session = newSession }
                 , sendMessage { tag = "extension-connect", data = { network = Nothing, extension = Just extensionName } }
                 )
 
@@ -122,7 +156,14 @@ update msg model =
         GotPrices result ->
             case result of
                 Ok prices ->
-                    ( { model | prices = Just prices }, Cmd.none )
+                    let
+                        oldSession =
+                            model.session
+
+                        newSession =
+                            { oldSession | prices = Just prices }
+                    in
+                    ( { model | session = newSession }, Cmd.none )
 
                 Err _ ->
                     ( model, Cmd.none )
@@ -130,12 +171,18 @@ update msg model =
         ToggleShowExtensions ->
             let
                 oldExtensionState =
-                    model.extension
+                    model.session.extension
 
                 newExtensionState =
                     { oldExtensionState | showExtensions = not oldExtensionState.showExtensions }
+
+                oldSession =
+                    model.session
+
+                newSession =
+                    { oldSession | extension = newExtensionState }
             in
-            ( { model | extension = newExtensionState }, Cmd.none )
+            ( { model | session = newSession }, Cmd.none )
 
 
 toggleAccount : String -> Account -> Account
@@ -155,7 +202,7 @@ view model =
                 AccountsRoute ->
                     accounts
 
-                SendRoute s ->
+                SendRoute _ ->
                     accounts
 
                 NotFoundRoute ->
@@ -164,11 +211,11 @@ view model =
     div [ class "flex flex-col justify-center items-center" ]
         [ div [ class "absolute flex flex-row justify-center items-center h-20 w-screen top-0 left-0 " ]
             [ div [ class "flex flex-row justify-end w-full max-w-5xl gap-24 mt-4" ]
-                [ networkSelect model.network
-                , selectExtension model
+                [ networkSelect model.session.network
+                , selectExtension model.session
                 ]
             ]
-        , div [ class "flex flex-row w-full" ] [ navBar model, page model ]
+        , div [ class "flex flex-row w-full" ] [ navBar model, page model.session ]
         ]
 
 

@@ -2,7 +2,7 @@ module EnkryptBanner exposing (..)
 
 import Html exposing (Html, div, node, text)
 import Html.Attributes exposing (attribute, class)
-import Model exposing (Model)
+import Session.Model exposing (Model)
 import Msg exposing (Msg)
 
 

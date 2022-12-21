@@ -1,7 +1,7 @@
 module Msg exposing (Msg(..))
 
 import Http
-import Model exposing (Account, Network, Prices)
+import Session.Model exposing (Account, Network, Prices)
 
 
 type Msg

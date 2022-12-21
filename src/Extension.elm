@@ -3,7 +3,7 @@ module Extension exposing (..)
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
-import Model exposing (Model)
+import Session.Model exposing (Model)
 import Msg exposing (Msg(..))
 import VitePluginHelper
 

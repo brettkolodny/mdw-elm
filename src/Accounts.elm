@@ -4,8 +4,8 @@ import EnkryptBanner exposing (enkryptBanner)
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
-import Model exposing (..)
 import Msg exposing (Msg(..))
+import Session.Model exposing (..)
 import Utils exposing (addressCutOffElement, formatTokenAmount, formatTokenPrice, identicon)
 import VitePluginHelper
 

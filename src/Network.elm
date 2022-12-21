@@ -3,7 +3,7 @@ module Network exposing (..)
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
-import Model exposing (Network(..), NetworkState)
+import Session.Model exposing (Network(..), NetworkState)
 import Msg exposing (Msg(..))
 import VitePluginHelper
 
