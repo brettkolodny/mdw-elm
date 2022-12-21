@@ -1,6 +1,6 @@
 module Model exposing (..)
 
-import Session.Model as SessionModel
+import Session.Model as Session
 
 
 type Route
@@ -10,6 +10,6 @@ type Route
 
 
 type alias Model =
-    { session : SessionModel.Model
+    { session : Session.Model
     , route : Route
     }

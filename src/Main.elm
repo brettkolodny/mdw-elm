@@ -12,6 +12,7 @@ import Msg exposing (Msg(..))
 import NavBar exposing (navBar)
 import Network exposing (networkSelect)
 import Session.Model exposing (Account, Network(..), Prices, Usd)
+import Session.Update as SessionUpdate
 
 
 main : Program (List String) Model Msg
@@ -63,6 +64,13 @@ init extensions =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SessionMsg msg_ ->
+            let
+                session =
+                    SessionUpdate.update msg_ model.session
+            in
+            ( { model | session = session }, Cmd.none )
+
         UpdateAccounts accounts ->
             let
                 oldSession =
@@ -70,32 +78,6 @@ update msg model =
 
                 newSession =
                     { oldSession | accounts = accounts }
-            in
-            ( { model | session = newSession }, Cmd.none )
-
-        ToggleAccountInfo address ->
-            let
-                oldSession =
-                    model.session
-
-                newSession =
-                    { oldSession | accounts = List.map (toggleAccount address) model.session.accounts }
-            in
-            ( { model | session = newSession }, Cmd.none )
-
-        ToggleShowNetworks ->
-            let
-                oldNetwork =
-                    model.session.network
-
-                newNetwork =
-                    { oldNetwork | showNetworks = not oldNetwork.showNetworks }
-
-                oldSession =
-                    model.session
-
-                newSession =
-                    { oldSession | network = newNetwork }
             in
             ( { model | session = newSession }, Cmd.none )
 
@@ -167,31 +149,6 @@ update msg model =
 
                 Err _ ->
                     ( model, Cmd.none )
-
-        ToggleShowExtensions ->
-            let
-                oldExtensionState =
-                    model.session.extension
-
-                newExtensionState =
-                    { oldExtensionState | showExtensions = not oldExtensionState.showExtensions }
-
-                oldSession =
-                    model.session
-
-                newSession =
-                    { oldSession | extension = newExtensionState }
-            in
-            ( { model | session = newSession }, Cmd.none )
-
-
-toggleAccount : String -> Account -> Account
-toggleAccount address account =
-    if address == account.address then
-        { account | show = not account.show }
-
-    else
-        account
 
 
 view : Model -> Html Msg

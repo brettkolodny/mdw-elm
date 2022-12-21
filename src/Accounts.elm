@@ -6,6 +6,7 @@ import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
 import Msg exposing (Msg(..))
 import Session.Model exposing (..)
+import Session.Update as Session
 import Utils exposing (addressCutOffElement, formatTokenAmount, formatTokenPrice, identicon)
 import VitePluginHelper
 
@@ -100,7 +101,7 @@ accountItem network price account =
     div []
         [ div
             [ class "flex flex-row justify-between items-center w-full px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md"
-            , onClick (ToggleAccountInfo account.address)
+            , onClick (SessionMsg (Session.ToggleAccountInfo account.address))
             ]
             [ div [ class "flex flex-row justify-center items-center gap-4" ]
                 [ identicon account.address
