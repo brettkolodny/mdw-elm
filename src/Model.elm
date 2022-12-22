@@ -1,6 +1,7 @@
 module Model exposing (..)
 
 import Routes.Overview.Model as Overview
+import Routes.Send.Model as Send
 import Session.Model as Session
 
 
@@ -12,7 +13,7 @@ type Route
 
 type Page
     = Overview Overview.Model
-    | Send
+    | Send Send.Model
 
 
 type alias Model =

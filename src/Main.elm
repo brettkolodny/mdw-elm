@@ -12,6 +12,7 @@ import NavBar exposing (navBar)
 import Network exposing (networkSelect)
 import Routes.Overview.Update as OverviewUpdate
 import Routes.Overview.View exposing (accounts)
+import Routes.Send.Update as SendUpdate
 import Routes.Send.View exposing (send)
 import Session.Model exposing (Account, Network(..), Prices, Usd)
 import Session.Update as SessionUpdate
@@ -55,7 +56,15 @@ init extensions =
                 }
             }
       , route = AccountsRoute
-      , page = Send
+      , page =
+            Send
+                { toAddress = ""
+                , fromAccount = Nothing
+                , toAddressValid = False
+                , showToAddressSelection = False
+                , showFromAddressSelection = False
+                , sendAmount = Nothing
+                }
       }
     , Http.get
         { url = "https://api.coingecko.com/api/v3/simple/price?ids=polkadot%2Ckusama&vs_currencies=usd"
@@ -80,6 +89,18 @@ update msg model =
                     case model.page of
                         Overview m ->
                             Overview (OverviewUpdate.update msg_ m)
+
+                        _ ->
+                            model.page
+            in
+            ( { model | page = page }, Cmd.none )
+
+        SendMsg msg_ ->
+            let
+                page =
+                    case model.page of
+                        Send m ->
+                            Send (SendUpdate.update msg_ m)
 
                         _ ->
                             model.page
@@ -174,8 +195,8 @@ view model =
                 Overview m ->
                     accounts model.session m
 
-                Send ->
-                    send model.session
+                Send m ->
+                    send model.session m
     in
     div [ class "flex flex-col justify-center items-center" ]
         [ div [ class "absolute flex flex-row justify-center items-center h-20 w-screen top-0 left-0 " ]
