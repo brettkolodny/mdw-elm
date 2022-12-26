@@ -50,7 +50,7 @@ extensionItem extensionName =
                     ( extensionName, div [] [] )
     in
     div
-        [ onClick (ConnectExtension extensionName)
+        [ onClick (SessionMsg (Session.ConnectExtension extensionName))
         , class "flex flex-row justify-start items-center gap-2 w-40 cursor-pointer"
         ]
         [ image, text name ]

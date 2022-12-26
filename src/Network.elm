@@ -54,7 +54,7 @@ networkSelect networkState =
         , if networkState.showNetworks then
             div
                 [ class "absolute flex flex-row justify-start items-center gap-4 border w-48 pl-4 p-2 rounded-full text-xl font-bold mt-2 cursor-pointer"
-                , onClick (SwitchNetwork otherNetwork)
+                , onClick (SessionMsg (Session.SwitchNetwork otherNetwork))
                 ]
                 [ otherNetworkImage
                 , text otherNetworkText

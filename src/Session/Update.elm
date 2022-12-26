@@ -1,6 +1,22 @@
-module Session.Update exposing (..)
+port module Session.Update exposing (..)
 
-import Session.Model exposing (Model, Network)
+import Session.Model exposing (Account, Model, Network(..))
+
+
+port updateAccounts : (List Account -> msg) -> Sub msg
+
+
+type alias PortData =
+    { network : Maybe String, extension : Maybe String }
+
+
+type alias PortMessage =
+    { tag : String
+    , data : PortData
+    }
+
+
+port sendMessage : PortMessage -> Cmd msg
 
 
 type Msg
@@ -8,11 +24,15 @@ type Msg
     | SwitchNetwork Network
     | ConnectExtension String
     | ToggleShowExtensions
+    | UpdateAccounts (List Account)
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> ( Model, Cmd a )
 update msg model =
     case msg of
+        UpdateAccounts accounts ->
+            ( { model | accounts = accounts }, Cmd.none )
+
         ToggleShowNetworks ->
             let
                 oldNetwork =
@@ -21,7 +41,7 @@ update msg model =
                 newNetwork =
                     { oldNetwork | showNetworks = not oldNetwork.showNetworks }
             in
-            { model | network = newNetwork }
+            ( { model | network = newNetwork }, Cmd.none )
 
         SwitchNetwork network ->
             let
@@ -31,10 +51,23 @@ update msg model =
                 newNetwork =
                     { oldNetwork | currentNetwork = network, showNetworks = not oldNetwork.showNetworks }
 
+                networkString =
+                    case network of
+                        Polkadot ->
+                            "Polkadot"
+
+                        Kusama ->
+                            "Kusama"
+
                 accounts =
                     List.map (\account -> { account | balance = Nothing }) model.accounts
             in
-            { model | network = newNetwork, accounts = accounts }
+            ( { model | network = newNetwork, accounts = accounts }
+            , sendMessage
+                { tag = "network-update"
+                , data = { network = Just networkString, extension = model.extension.currentExtension }
+                }
+            )
 
         ConnectExtension extensionName ->
             let
@@ -45,10 +78,12 @@ update msg model =
                     { oldExtensionState | currentExtension = Just extensionName, showExtensions = False }
             in
             if extensionName /= Maybe.withDefault "" model.extension.currentExtension then
-                { model | extension = netExtensionState }
+                ( { model | extension = netExtensionState }
+                , sendMessage { tag = "extension-connect", data = { network = Nothing, extension = Just extensionName } }
+                )
 
             else
-                model
+                ( model, Cmd.none )
 
         ToggleShowExtensions ->
             let
@@ -58,4 +93,4 @@ update msg model =
                 newExtensionState =
                     { oldExtensionState | showExtensions = not oldExtensionState.showExtensions }
             in
-            { model | extension = newExtensionState }
+            ( { model | extension = newExtensionState }, Cmd.none )

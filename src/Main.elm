@@ -1,4 +1,4 @@
-port module Main exposing (main)
+module Main exposing (main)
 
 import Browser
 import Extension exposing (selectExtension)
@@ -14,33 +14,13 @@ import Routes.Overview.Update as OverviewUpdate
 import Routes.Overview.View exposing (accounts)
 import Routes.Send.Update as SendUpdate
 import Routes.Send.View exposing (send)
-import Session.Model exposing (Account, Network(..), Prices, Usd)
+import Session.Model exposing (Network(..), Prices, Usd)
 import Session.Update as SessionUpdate
 
 
 main : Program (List String) Model Msg
 main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
-
-
-
--- PORTS
-
-
-port updateAccounts : (List Account -> msg) -> Sub msg
-
-
-type alias PortData =
-    { network : Maybe String, extension : Maybe String }
-
-
-type alias PortMessage =
-    { tag : String
-    , data : PortData
-    }
-
-
-port sendMessage : PortMessage -> Cmd msg
 
 
 init : List String -> ( Model, Cmd Msg )
@@ -78,10 +58,10 @@ update msg model =
     case msg of
         SessionMsg msg_ ->
             let
-                session =
+                ( session, cmd ) =
                     SessionUpdate.update msg_ model.session
             in
-            ( { model | session = session }, Cmd.none )
+            ( { model | session = session }, cmd )
 
         OverviewMsg msg_ ->
             let
@@ -106,70 +86,6 @@ update msg model =
                             model.page
             in
             ( { model | page = page }, Cmd.none )
-
-        UpdateAccounts accounts ->
-            let
-                oldSession =
-                    model.session
-
-                newSession =
-                    { oldSession | accounts = accounts }
-            in
-            ( { model | session = newSession }, Cmd.none )
-
-        SwitchNetwork network ->
-            let
-                oldNetwork =
-                    model.session.network
-
-                newNetwork =
-                    { oldNetwork | currentNetwork = network, showNetworks = not oldNetwork.showNetworks }
-
-                networkString =
-                    case network of
-                        Polkadot ->
-                            "Polkadot"
-
-                        Kusama ->
-                            "Kusama"
-
-                accounts =
-                    List.map (\account -> { account | balance = Nothing }) model.session.accounts
-
-                oldSession =
-                    model.session
-
-                newSession =
-                    { oldSession | network = newNetwork, accounts = accounts }
-            in
-            ( { model | session = newSession }
-            , sendMessage
-                { tag = "network-update"
-                , data = { network = Just networkString, extension = model.session.extension.currentExtension }
-                }
-            )
-
-        ConnectExtension extensionName ->
-            let
-                oldExtensionState =
-                    model.session.extension
-
-                netExtensionState =
-                    { oldExtensionState | currentExtension = Just extensionName, showExtensions = False }
-
-                oldSession =
-                    model.session
-
-                newSession =
-                    { oldSession | extension = netExtensionState }
-            in
-            if extensionName /= Maybe.withDefault "" model.session.extension.currentExtension then
-                ( { model | session = newSession }
-                , sendMessage { tag = "extension-connect", data = { network = Nothing, extension = Just extensionName } }
-                )
-
-            else
-                ( model, Cmd.none )
 
         GotPrices result ->
             case result of
@@ -222,4 +138,4 @@ pricesDecoder =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    updateAccounts UpdateAccounts
+    SessionUpdate.updateAccounts (SessionUpdate.UpdateAccounts >> SessionMsg)
