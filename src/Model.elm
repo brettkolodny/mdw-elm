@@ -1,46 +1,8 @@
 module Model exposing (..)
 
-
-type alias Balance =
-    { available : Int
-    , staked : Int
-    }
-
-
-type alias Account =
-    { address : String
-    , show : Bool
-    , name : String
-    , balance : Maybe Balance
-    }
-
-
-type Network
-    = Polkadot
-    | Kusama
-
-
-type alias NetworkState =
-    { currentNetwork : Network
-    , showNetworks : Bool
-    }
-
-
-type alias ExtensoinState =
-    { currentExtension : Maybe String
-    , extensions : List String
-    , showExtensions : Bool
-    }
-
-
-type alias Usd =
-    { usd : Float }
-
-
-type alias Prices =
-    { polkadot : Usd
-    , kusama : Usd
-    }
+import Routes.Overview.Model as Overview
+import Routes.Send.Model as Send
+import Session.Model as Session
 
 
 type Route
@@ -49,11 +11,13 @@ type Route
     | NotFoundRoute
 
 
+type Page
+    = Overview Overview.Model
+    | Send Send.Model
+
+
 type alias Model =
-    { accounts : List Account
-    , count : Int
-    , network : NetworkState
-    , prices : Maybe Prices
-    , extension : ExtensoinState
+    { session : Session.Model
     , route : Route
+    , page : Page
     }

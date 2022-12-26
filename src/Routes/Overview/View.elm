@@ -1,23 +1,25 @@
-module Accounts exposing (..)
+module Routes.Overview.View exposing (..)
 
 import EnkryptBanner exposing (enkryptBanner)
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
-import Model exposing (..)
 import Msg exposing (Msg(..))
+import Routes.Overview.Model exposing (Model)
+import Routes.Overview.Update as Overview
+import Session.Model as Session exposing (Account, Network(..))
 import Utils exposing (addressCutOffElement, formatTokenAmount, formatTokenPrice, identicon)
 import VitePluginHelper
 
 
-accounts : Model -> Html Msg
-accounts model =
+accounts : Session.Model -> Model -> Html Msg
+accounts session model =
     let
         accs =
-            model.accounts
+            session.accounts
 
         network =
-            model.network.currentNetwork
+            session.network.currentNetwork
 
         price =
             Maybe.map
@@ -29,7 +31,7 @@ accounts model =
                         Kusama ->
                             p.kusama.usd
                 )
-                model.prices
+                session.prices
 
         ( tokenSymbol, decimals ) =
             case network of
@@ -60,7 +62,7 @@ accounts model =
                 formatTokenAmount totalBalance decimals
     in
     div [ class "w-full flex flex-col justify-center items-center mt-20 gap-4" ]
-        [ enkryptBanner model
+        [ enkryptBanner session
         , div [ class "flex flex-col justify-center items-center w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
             [ div [ class "flex flex-row justify-between items-center w-full px-4 mb-8" ]
                 [ div [ class "flex flex-col justify-center items-start" ]
@@ -73,14 +75,17 @@ accounts model =
                     , div [ class "px-4 py-1 text-gray-500 border rounded-lg cursor-pointer" ] [ text "Send" ]
                     ]
                 ]
-            , div [ class "flex flex-col w-full gap-2" ] (List.map (accountItem network price) accs)
+            , div [ class "flex flex-col w-full gap-2" ] (List.map (accountItem network price model) accs)
             ]
         ]
 
 
-accountItem : Network -> Maybe Float -> Account -> Html Msg
-accountItem network price account =
+accountItem : Network -> Maybe Float -> Model -> Account -> Html Msg
+accountItem network price model account =
     let
+        showAccount =
+            List.member account.address model
+
         ( netString, tokenSymbol, decimals ) =
             case network of
                 Polkadot ->
@@ -100,7 +105,7 @@ accountItem network price account =
     div []
         [ div
             [ class "flex flex-row justify-between items-center w-full px-4 py-2 hover:bg-gray-100 cursor-pointer rounded-md"
-            , onClick (ToggleAccountInfo account.address)
+            , onClick (OverviewMsg (Overview.ToggleShow account.address))
             ]
             [ div [ class "flex flex-row justify-center items-center gap-4" ]
                 [ identicon account.address
@@ -112,7 +117,7 @@ accountItem network price account =
             , div [ class "flex flex-row gap-8" ]
                 [ div [ class "text-black text-xl font-bold" ] [ text (totalBalance ++ " " ++ tokenSymbol) ]
                 , div []
-                    [ if account.show then
+                    [ if showAccount then
                         img [ class "w-8 h-8 transform rotate-180 transition-all", src <| VitePluginHelper.asset "/src/assets/icons/chevron.svg" ] []
 
                       else
@@ -120,7 +125,7 @@ accountItem network price account =
                     ]
                 ]
             ]
-        , if account.show then
+        , if showAccount then
             div [ class "w-full" ] [ accountExpanded account network price, div [ class "w-full h-px bg-gray-300" ] [] ]
 
           else

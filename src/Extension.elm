@@ -3,8 +3,9 @@ module Extension exposing (..)
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
-import Model exposing (Model)
 import Msg exposing (Msg(..))
+import Session.Model exposing (Model)
+import Session.Update as Session
 import VitePluginHelper
 
 
@@ -14,9 +15,9 @@ selectExtension model =
         currentExtension =
             extensionItem (Maybe.withDefault "connect" model.extension.currentExtension)
     in
-    div [class "flex justify-start items-center py-2 border rounded-full"]
+    div [ class "flex justify-start items-center py-2 border rounded-full" ]
         [ div [ class "flex flex-col justify-start items-center pl-4 text-lg font-bold" ]
-            [ div [ onClick ToggleShowExtensions ] [ currentExtension ]
+            [ div [ onClick (SessionMsg Session.ToggleShowExtensions) ] [ currentExtension ]
             , div
                 []
                 (if model.extension.showExtensions then
@@ -49,7 +50,7 @@ extensionItem extensionName =
                     ( extensionName, div [] [] )
     in
     div
-        [ onClick (ConnectExtension extensionName)
+        [ onClick (SessionMsg (Session.ConnectExtension extensionName))
         , class "flex flex-row justify-start items-center gap-2 w-40 cursor-pointer"
         ]
         [ image, text name ]

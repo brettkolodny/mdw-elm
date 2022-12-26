@@ -1,16 +1,21 @@
-port module Main exposing (main)
+module Main exposing (main)
 
-import Accounts exposing (accounts)
 import Browser
 import Extension exposing (selectExtension)
 import Html exposing (Html, div)
 import Html.Attributes exposing (class)
 import Http
 import Json.Decode exposing (Decoder, field, float, map, map2)
-import Model exposing (Account, Model, Network(..), Prices, Route(..), Usd)
+import Model exposing (Model, Page(..), Route(..))
 import Msg exposing (Msg(..))
 import NavBar exposing (navBar)
 import Network exposing (networkSelect)
+import Routes.Overview.Update as OverviewUpdate
+import Routes.Overview.View exposing (accounts)
+import Routes.Send.Update as SendUpdate
+import Routes.Send.View exposing (send)
+import Session.Model exposing (Network(..), Prices, Usd)
+import Session.Update as SessionUpdate
 
 
 main : Program (List String) Model Msg
@@ -18,38 +23,28 @@ main =
     Browser.element { init = init, update = update, view = view, subscriptions = subscriptions }
 
 
-
--- PORTS
-
-
-port updateAccounts : (List Account -> msg) -> Sub msg
-
-
-type alias PortData =
-    { network : Maybe String, extension : Maybe String }
-
-
-type alias PortMessage =
-    { tag : String
-    , data : PortData
-    }
-
-
-port sendMessage : PortMessage -> Cmd msg
-
-
 init : List String -> ( Model, Cmd Msg )
 init extensions =
-    ( { accounts = []
-      , count = 0
-      , network = { currentNetwork = Polkadot, showNetworks = False }
-      , prices = Nothing
-      , extension =
-            { extensions = extensions
-            , currentExtension = Nothing
-            , showExtensions = False
+    ( { session =
+            { accounts = []
+            , network = { currentNetwork = Polkadot, showNetworks = False }
+            , prices = Nothing
+            , extension =
+                { extensions = extensions
+                , currentExtension = Nothing
+                , showExtensions = False
+                }
             }
       , route = AccountsRoute
+      , page =
+            Send
+                { toAddress = ""
+                , fromAccount = Nothing
+                , toAddressValid = False
+                , showToAddressSelection = False
+                , showFromAddressSelection = False
+                , sendAmount = Nothing
+                }
       }
     , Http.get
         { url = "https://api.coingecko.com/api/v3/simple/price?ids=polkadot%2Ckusama&vs_currencies=usd"
@@ -61,114 +56,72 @@ init extensions =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        UpdateAccounts accounts ->
-            ( { model | accounts = accounts }, Cmd.none )
-
-        ToggleAccountInfo address ->
-            ( { model | accounts = List.map (toggleAccount address) model.accounts }, Cmd.none )
-
-        ToggleShowNetworks ->
+        SessionMsg msg_ ->
             let
-                oldNetwork =
-                    model.network
-
-                newNetwork =
-                    { oldNetwork | showNetworks = not oldNetwork.showNetworks }
+                ( session, cmd ) =
+                    SessionUpdate.update msg_ model.session
             in
-            ( { model | network = newNetwork }, Cmd.none )
+            ( { model | session = session }, cmd )
 
-        SwitchNetwork network ->
+        OverviewMsg msg_ ->
             let
-                oldNetwork =
-                    model.network
+                page =
+                    case model.page of
+                        Overview m ->
+                            Overview (OverviewUpdate.update msg_ m)
 
-                newNetwork =
-                    { oldNetwork | currentNetwork = network, showNetworks = not oldNetwork.showNetworks }
-
-                networkString =
-                    case network of
-                        Polkadot ->
-                            "Polkadot"
-
-                        Kusama ->
-                            "Kusama"
-
-                accounts =
-                    List.map (\account -> { account | balance = Nothing }) model.accounts
+                        _ ->
+                            model.page
             in
-            ( { model | network = newNetwork, accounts = accounts }
-            , sendMessage
-                { tag = "network-update"
-                , data = { network = Just networkString, extension = model.extension.currentExtension }
-                }
-            )
+            ( { model | page = page }, Cmd.none )
 
-        ConnectExtension extensionName ->
+        SendMsg msg_ ->
             let
-                oldExtensionState =
-                    model.extension
+                page =
+                    case model.page of
+                        Send m ->
+                            Send (SendUpdate.update msg_ m)
 
-                netExtensionState =
-                    { oldExtensionState | currentExtension = Just extensionName, showExtensions = False }
+                        _ ->
+                            model.page
             in
-            if extensionName /= Maybe.withDefault "" model.extension.currentExtension then
-                ( { model | extension = netExtensionState }
-                , sendMessage { tag = "extension-connect", data = { network = Nothing, extension = Just extensionName } }
-                )
-
-            else
-                ( model, Cmd.none )
+            ( { model | page = page }, Cmd.none )
 
         GotPrices result ->
             case result of
                 Ok prices ->
-                    ( { model | prices = Just prices }, Cmd.none )
+                    let
+                        oldSession =
+                            model.session
+
+                        newSession =
+                            { oldSession | prices = Just prices }
+                    in
+                    ( { model | session = newSession }, Cmd.none )
 
                 Err _ ->
                     ( model, Cmd.none )
-
-        ToggleShowExtensions ->
-            let
-                oldExtensionState =
-                    model.extension
-
-                newExtensionState =
-                    { oldExtensionState | showExtensions = not oldExtensionState.showExtensions }
-            in
-            ( { model | extension = newExtensionState }, Cmd.none )
-
-
-toggleAccount : String -> Account -> Account
-toggleAccount address account =
-    if address == account.address then
-        { account | show = not account.show }
-
-    else
-        account
 
 
 view : Model -> Html Msg
 view model =
     let
         page =
-            case model.route of
-                AccountsRoute ->
-                    accounts
+            case model.page of
+                Overview m ->
+                    accounts model.session m
 
-                SendRoute s ->
-                    accounts
-
-                NotFoundRoute ->
-                    accounts
+                Send m ->
+                    send model.session m
     in
     div [ class "flex flex-col justify-center items-center" ]
         [ div [ class "absolute flex flex-row justify-center items-center h-20 w-screen top-0 left-0 " ]
             [ div [ class "flex flex-row justify-end w-full max-w-5xl gap-24 mt-4" ]
-                [ networkSelect model.network
-                , selectExtension model
+                [ networkSelect model.session.network
+                , selectExtension model.session
                 ]
             ]
-        , div [ class "flex flex-row w-full" ] [ navBar model, page model ]
+        , div [ class "flex flex-row w-full" ] [ navBar model, page ]
         ]
 
 
@@ -185,4 +138,4 @@ pricesDecoder =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    updateAccounts UpdateAccounts
+    SessionUpdate.updateAccounts (SessionUpdate.UpdateAccounts >> SessionMsg)

@@ -1,5 +1,6 @@
 module Utils exposing (..)
 
+import Base58
 import Html exposing (Html, node)
 import Html.Attributes exposing (attribute)
 import Msg exposing (Msg)
@@ -60,3 +61,17 @@ addressCutOffElement network address =
 identicon : String -> Html Msg
 identicon address =
     node "address-identicon" [ attribute "address" address ] []
+
+
+addressIsValid : String -> Bool
+addressIsValid address =
+    let
+        validBase58 =
+            case Base58.decode address of
+                Ok _ ->
+                    True
+
+                _ ->
+                    False
+    in
+    validBase58

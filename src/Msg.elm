@@ -1,14 +1,14 @@
 module Msg exposing (Msg(..))
 
 import Http
-import Model exposing (Account, Network, Prices)
+import Routes.Overview.Update as Overview
+import Routes.Send.Update as Send
+import Session.Model exposing (Prices)
+import Session.Update as Session
 
 
 type Msg
-    = UpdateAccounts (List Account)
-    | ToggleAccountInfo String
-    | ToggleShowNetworks
-    | SwitchNetwork Network
-    | GotPrices (Result Http.Error Prices)
-    | ConnectExtension String
-    | ToggleShowExtensions
+    = GotPrices (Result Http.Error Prices)
+    | SessionMsg Session.Msg
+    | OverviewMsg Overview.Msg
+    | SendMsg Send.Msg

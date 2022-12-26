@@ -3,8 +3,9 @@ module Network exposing (..)
 import Html exposing (Html, div, img, text)
 import Html.Attributes exposing (class, src)
 import Html.Events exposing (onClick)
-import Model exposing (Network(..), NetworkState)
 import Msg exposing (Msg(..))
+import Session.Model exposing (Network(..), NetworkState)
+import Session.Update as Session
 import VitePluginHelper
 
 
@@ -45,7 +46,7 @@ networkSelect networkState =
     div []
         [ div
             [ class "flex flex-row justify-start items-center gap-4 border w-48 pl-4 p-2 rounded-full text-xl font-bold cursor-pointer"
-            , onClick ToggleShowNetworks
+            , onClick (SessionMsg Session.ToggleShowNetworks)
             ]
             [ currentNetworkImage
             , text currentNetworkText
@@ -53,7 +54,7 @@ networkSelect networkState =
         , if networkState.showNetworks then
             div
                 [ class "absolute flex flex-row justify-start items-center gap-4 border w-48 pl-4 p-2 rounded-full text-xl font-bold mt-2 cursor-pointer"
-                , onClick (SwitchNetwork otherNetwork)
+                , onClick (SessionMsg (Session.SwitchNetwork otherNetwork))
                 ]
                 [ otherNetworkImage
                 , text otherNetworkText
