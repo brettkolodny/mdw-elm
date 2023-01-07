@@ -10,4 +10,16 @@ type alias Model =
     , showToAddressSelection : Bool
     , showFromAddressSelection : Bool
     , sendAmount : Maybe Float
+    , transactionPreview : Int
+    }
+
+
+model =
+    { toAddress = ""
+    , fromAccount = Nothing
+    , toAddressValid = False
+    , showToAddressSelection = False
+    , showFromAddressSelection = False
+    , sendAmount = Nothing
+    , transactionPreview = 0
     }

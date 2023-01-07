@@ -1,13 +1,14 @@
 module Routes.Send.View exposing (..)
 
-import Html exposing (Html, div, h1, img, input, text)
+import Html exposing (Html, button, div, h1, img, input, text)
 import Html.Attributes exposing (class, placeholder, src, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Msg exposing (Msg(..))
 import Round
 import Routes.Send.Model as Send
 import Routes.Send.Update as SendMsg
-import Session.Model as Session
+import Session.Model as Session exposing (Network(..))
+import String exposing (fromInt)
 import Utils
 import VitePluginHelper
 
@@ -25,6 +26,8 @@ send session model =
             , fromAddressField session model
             , toAddressField session model
             , sendAmountField session model
+            , transactionPreview session model
+            , continueButton session model
             ]
         ]
 
@@ -135,7 +138,7 @@ toAddressField session model =
 sendAmountField : Session.Model -> Send.Model -> Html Msg
 sendAmountField session model =
     let
-        ( tokenSymbol, _, icon ) =
+        ( tokenSymbol, decimals, icon ) =
             case session.network.currentNetwork of
                 Session.Polkadot ->
                     ( "DOT", 10, VitePluginHelper.asset "/src/assets/polkadot-network.png" )
@@ -163,8 +166,21 @@ sendAmountField session model =
                 _ ->
                     False
 
+        isOvermax =
+            case model.fromAccount of
+                Just account ->
+                    case account.balance of
+                        Just balance ->
+                            Utils.fromBase balance.available decimals < Maybe.withDefault 0 model.sendAmount
+
+                        Nothing ->
+                            False
+
+                Nothing ->
+                    False
+
         sendCss =
-            if not sendAmountValid then
+            if not sendAmountValid || isOvermax then
                 "text-red-400"
 
             else
@@ -244,6 +260,87 @@ addressDropDown session _ for =
         ]
 
 
+transactionPreview : Session.Model -> Send.Model -> Html Msg
+transactionPreview session model =
+    let
+        ( decimals, tokenSymbol ) =
+            case session.network.currentNetwork of
+                Polkadot ->
+                    ( 10, "DOT" )
+
+                Kusama ->
+                    ( 12, "KSM" )
+
+        tokenPrice =
+            case session.prices of
+                Just prices ->
+                    if tokenSymbol == "DOT" then
+                        prices.polkadot.usd
+
+                    else
+                        prices.kusama.usd
+
+                _ ->
+                    0.0
+    in
+    div [ class "flex flex-row gap-4 self-start text-sm text-gray-500 font-medium" ]
+        [ div [] [text "Network fee:"]
+        , div [] [ text ("~" ++ Utils.formatTokenPrice model.transactionPreview decimals (Just tokenPrice)) ]
+        , div [ class "text-gray-400"] [ text (Utils.formatTokenAmount model.transactionPreview decimals ++ " " ++ tokenSymbol) ]
+        ]
+
+
 continueButton : Session.Model -> Send.Model -> Html Msg
 continueButton session model =
-    div [] []
+    let
+        decimals =
+            case session.network.currentNetwork of
+                Polkadot ->
+                    10
+
+                Kusama ->
+                    12
+
+        fromAccountSelected =
+            case model.fromAccount of
+                Just _ ->
+                    True
+
+                Nothing ->
+                    False
+
+        toAddressValid =
+            Utils.addressIsValid model.toAddress
+
+        sendAmountValid =
+            case model.sendAmount of
+                Just _ ->
+                    True
+
+                _ ->
+                    False
+
+        isOvermax =
+            case model.fromAccount of
+                Just account ->
+                    case account.balance of
+                        Just balance ->
+                            Utils.fromBase balance.available decimals < Maybe.withDefault 0 model.sendAmount
+
+                        Nothing ->
+                            False
+
+                Nothing ->
+                    False
+    in
+    if fromAccountSelected && toAddressValid && sendAmountValid && not isOvermax then
+        div [ class "w-full" ]
+            [ button [ class "w-48 h-12 text-lg font-medium bg-[#e6007a] text-white rounded-full" ]
+                [ text "Continue" ]
+            ]
+
+    else
+        div [ class "w-full" ]
+            [ button [ class "w-48 h-12 text-lg font-medium bg-gray-300 text-gray-400 rounded-full cursor-not-allowed" ]
+                [ text "Continue" ]
+            ]

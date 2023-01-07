@@ -15,49 +15,53 @@ networkSelect networkState =
         ( currentNetworkImage, currentNetworkText ) =
             case networkState.currentNetwork of
                 Kusama ->
-                    ( img [ class "w-8 h-8", src <| VitePluginHelper.asset "/src/assets/kusama-network.png" ] []
+                    ( img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/kusama-network.png" ] []
                     , "Kusama"
                     )
 
                 Polkadot ->
-                    ( img [ class "w-8 h-8", src <| VitePluginHelper.asset "/src/assets/polkadot-network.png" ] []
+                    ( img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/polkadot-network.png" ] []
                     , "Polkadot"
                     )
 
-        --
-        --    div [ class "flex flex-row justify-start items-center w-8 h-8", onClick ToggleShowNetworks ]
-        --        [ img [ src <| VitePluginHelper.asset "/src/assets/polkadot-network.png" ] []
-        --        , text "Polkadot"
-        --        ]
         ( otherNetworkImage, otherNetworkText, otherNetwork ) =
             case networkState.currentNetwork of
                 Kusama ->
-                    ( img [ class "w-8 h-8", src <| VitePluginHelper.asset "/src/assets/polkadot-network.png" ] []
+                    ( img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/polkadot-network.png" ] []
                     , "Polkadot"
                     , Polkadot
                     )
 
                 Polkadot ->
-                    ( img [ class "w-8 h-8", src <| VitePluginHelper.asset "/src/assets/kusama-network.png" ] []
+                    ( img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/kusama-network.png" ] []
                     , "Kusama"
                     , Kusama
                     )
     in
-    div []
+    div [ class "flex" ]
         [ div
-            [ class "flex flex-row justify-start items-center gap-4 border w-48 pl-4 p-2 rounded-full text-xl font-bold cursor-pointer"
+            [ class "relative flex flex-row justify-start items-center gap-2 border w-40 pl-4 p-2 rounded-full text-sm font-bold cursor-pointer"
             , onClick (SessionMsg Session.ToggleShowNetworks)
             ]
             [ currentNetworkImage
             , text currentNetworkText
             ]
         , if networkState.showNetworks then
-            div
-                [ class "absolute flex flex-row justify-start items-center gap-4 border w-48 pl-4 p-2 rounded-full text-xl font-bold mt-2 cursor-pointer"
-                , onClick (SessionMsg (Session.SwitchNetwork otherNetwork))
-                ]
-                [ otherNetworkImage
-                , text otherNetworkText
+            div [ class "absolute flex flex-col divide-y bg-white border rounded-[26px] shadow-lg" ]
+                [ div
+                    [ class "flex flex-row justify-start items-center gap-2 w-40 pl-4 p-2 text-sm font-bold cursor-pointer"
+                    , onClick (SessionMsg Session.ToggleShowNetworks)
+                    ]
+                    [ currentNetworkImage
+                    , text currentNetworkText
+                    ]
+                , div
+                    [ class "flex flex-row justify-start items-center gap-2 w-40 pl-4 p-2 text-sm font-bold cursor-pointer"
+                    , onClick (SessionMsg (Session.SwitchNetwork otherNetwork))
+                    ]
+                    [ otherNetworkImage
+                    , text otherNetworkText
+                    ]
                 ]
 
           else

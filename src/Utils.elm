@@ -75,3 +75,13 @@ addressIsValid address =
                     False
     in
     validBase58
+
+
+toBase : Float -> Int -> Int
+toBase number decimals =
+    floor (number * toFloat (10 ^ decimals))
+
+
+fromBase : Int -> Int -> Float
+fromBase number decimals =
+    toFloat number / (toFloat 10 ^ toFloat decimals)

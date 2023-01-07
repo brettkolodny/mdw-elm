@@ -12,6 +12,7 @@ import NavBar exposing (navBar)
 import Network exposing (networkSelect)
 import Routes.Overview.Update as OverviewUpdate
 import Routes.Overview.View exposing (accounts)
+import Routes.Send.Model as SendModel
 import Routes.Send.Update as SendUpdate
 import Routes.Send.View exposing (send)
 import Session.Model exposing (Network(..), Prices, Usd)
@@ -37,14 +38,7 @@ init extensions =
             }
       , route = AccountsRoute
       , page =
-            Send
-                { toAddress = ""
-                , fromAccount = Nothing
-                , toAddressValid = False
-                , showToAddressSelection = False
-                , showFromAddressSelection = False
-                , sendAmount = Nothing
-                }
+            Send SendModel.model
       }
     , Http.get
         { url = "https://api.coingecko.com/api/v3/simple/price?ids=polkadot%2Ckusama&vs_currencies=usd"
@@ -77,15 +71,19 @@ update msg model =
 
         SendMsg msg_ ->
             let
-                page =
+                ( page, cmd ) =
                     case model.page of
                         Send m ->
-                            Send (SendUpdate.update msg_ m)
+                            let
+                                ( page_, cmd_ ) =
+                                    SendUpdate.update msg_ m
+                            in
+                            ( Send page_, cmd_ )
 
                         _ ->
-                            model.page
+                            ( model.page, Cmd.none )
             in
-            ( { model | page = page }, Cmd.none )
+            ( { model | page = page }, cmd )
 
         GotPrices result ->
             case result of
@@ -138,4 +136,7 @@ pricesDecoder =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    SessionUpdate.updateAccounts (SessionUpdate.UpdateAccounts >> SessionMsg)
+    Sub.batch
+        [ SessionUpdate.updateAccounts (SessionUpdate.UpdateAccounts >> SessionMsg)
+        , SendUpdate.transactionPreview (SendUpdate.TransactionPreview >> SendMsg)
+        ]

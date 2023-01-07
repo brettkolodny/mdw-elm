@@ -16,7 +16,7 @@ type alias PortMessage =
     }
 
 
-port sendMessage : PortMessage -> Cmd msg
+port sessionMessage : PortMessage -> Cmd msg
 
 
 type Msg
@@ -63,7 +63,7 @@ update msg model =
                     List.map (\account -> { account | balance = Nothing }) model.accounts
             in
             ( { model | network = newNetwork, accounts = accounts }
-            , sendMessage
+            , sessionMessage
                 { tag = "network-update"
                 , data = { network = Just networkString, extension = model.extension.currentExtension }
                 }
@@ -74,16 +74,20 @@ update msg model =
                 oldExtensionState =
                     model.extension
 
-                netExtensionState =
-                    { oldExtensionState | currentExtension = Just extensionName, showExtensions = False }
+                newExtensionState =
+                    if extensionName /= Maybe.withDefault "" model.extension.currentExtension then
+                        { oldExtensionState | currentExtension = Just extensionName, showExtensions = False }
+
+                    else
+                        { oldExtensionState | showExtensions = False }
             in
             if extensionName /= Maybe.withDefault "" model.extension.currentExtension then
-                ( { model | extension = netExtensionState }
-                , sendMessage { tag = "extension-connect", data = { network = Nothing, extension = Just extensionName } }
+                ( { model | extension = newExtensionState }
+                , sessionMessage { tag = "extension-connect", data = { network = Nothing, extension = Just extensionName } }
                 )
 
             else
-                ( model, Cmd.none )
+                ( { model | extension = newExtensionState }, Cmd.none )
 
         ToggleShowExtensions ->
             let
