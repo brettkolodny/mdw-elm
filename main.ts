@@ -10,16 +10,12 @@ import "./src/customComponents/address";
 import "./src/customComponents/downloadEnkrypt";
 import "./src/customComponents/identicon";
 
-// TYPES ---------------------------------------------------------------------
-
-// interface PortMsg {
-//   tag: string;
-//   data: any;
-// }
+// TYPES ----------------------------------------------------------------------
 
 type PortMsg =
   | { tag: "network-update"; data: { network: Network; extension: string } }
-  | { tag: "extension-connect"; data: string };
+  | { tag: "extension-connect"; data: { extension: string } }
+  | { tag: "send-preview"; data: SendData };
 
 interface AccountInfo {
   address: string;

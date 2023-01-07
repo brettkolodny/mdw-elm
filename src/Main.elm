@@ -113,8 +113,8 @@ view model =
                     send model.session m
     in
     div [ class "flex flex-col justify-center items-center" ]
-        [ div [ class "absolute flex flex-row justify-center items-center h-20 w-screen top-0 left-0 " ]
-            [ div [ class "flex flex-row justify-end w-full max-w-5xl gap-24 mt-4" ]
+        [ div [ class "absolute flex flex-row justify-center items-center h-24 w-screen top-0 left-0 " ]
+            [ div [ class "flex flex-row justify-end w-full max-w-5xl gap-6 mt-4" ]
                 [ networkSelect model.session.network
                 , selectExtension model.session
                 ]

@@ -45,6 +45,7 @@ networkSelect networkState =
             ]
             [ currentNetworkImage
             , text currentNetworkText
+            , img [ src <| VitePluginHelper.asset "/src/assets/icons/down-chevron.svg" ] []
             ]
         , if networkState.showNetworks then
             div [ class "absolute flex flex-col divide-y bg-white border rounded-[26px] shadow-lg" ]

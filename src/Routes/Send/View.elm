@@ -20,7 +20,7 @@ type FieldFor
 
 send : Session.Model -> Send.Model -> Html Msg
 send session model =
-    div [ class "w-full flex flex-col justify-center items-center mt-20 gap-4" ]
+    div [ class "w-full flex flex-col justify-center items-center mt-12 gap-4" ]
         [ div [ class "flex flex-col justify-center items-center gap-4 w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
             [ h1 [ class "self-start text-4xl text-[#333] font-bold" ] [ text "Send" ]
             , fromAddressField session model

@@ -61,7 +61,7 @@ accounts session model =
             else
                 formatTokenAmount totalBalance decimals
     in
-    div [ class "w-full flex flex-col justify-center items-center mt-20 gap-4" ]
+    div [ class "w-full flex flex-col justify-center items-center mt-16 gap-4" ]
         [ enkryptBanner session
         , div [ class "flex flex-col justify-center items-center w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
             [ div [ class "flex flex-row justify-between items-center w-full px-4 mb-8" ]
