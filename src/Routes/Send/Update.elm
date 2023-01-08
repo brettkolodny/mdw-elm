@@ -52,7 +52,7 @@ update msg model =
             ( { model | toAddress = address }, Cmd.none )
 
         ToggleToAddressSelection ->
-            ( { model | showToAddressSelection = not model.showToAddressSelection }, Cmd.none )
+            ( { model | showToAddressSelection = not model.showToAddressSelection, showFromAddressSelection = False }, Cmd.none )
 
         ToAddressSelected address ->
             ( { model | toAddress = address, showToAddressSelection = not model.showToAddressSelection }, Cmd.none )
@@ -61,7 +61,7 @@ update msg model =
             ( { model | fromAccount = Just account, showFromAddressSelection = not model.showFromAddressSelection }, Cmd.none )
 
         ToggleFromAddressSelection ->
-            ( { model | showFromAddressSelection = not model.showFromAddressSelection }, Cmd.none )
+            ( { model | showFromAddressSelection = not model.showFromAddressSelection, showToAddressSelection = False }, Cmd.none )
 
         SendAmountUpdated amount ->
             let

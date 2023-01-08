@@ -17,6 +17,13 @@ selectExtension model =
                 [ extensionItem (Maybe.withDefault "connect" model.extension.currentExtension)
                 , img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/icons/down-chevron.svg" ] []
                 ]
+
+        extensionOptions =
+            if model.extension.currentExtension /= Just "connect" then
+                model.extension.extensions ++ [ "disconnect" ]
+
+            else
+                model.extension.extensions
     in
     div [ class "flex" ]
         [ div
@@ -26,7 +33,7 @@ selectExtension model =
             [ div [] [ currentExtension ] ]
         , if model.extension.showExtensions then
             div [ class "absolute flex flex-col divide-y bg-white border rounded-[26px] shadow-lg" ]
-                (model.extension.extensions |> List.map (\e -> div [ class "w-44 py-2" ] [ extensionItem e ]))
+                (extensionOptions |> List.map (\e -> div [ class "w-44 py-2" ] [ extensionItem e ]))
 
           else
             div [] []

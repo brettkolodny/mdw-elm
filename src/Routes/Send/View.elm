@@ -1,5 +1,6 @@
 module Routes.Send.View exposing (..)
 
+import EnkryptBanner exposing (enkryptBanner)
 import Html exposing (Html, button, div, h1, img, input, text)
 import Html.Attributes exposing (class, placeholder, src, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -8,7 +9,6 @@ import Round
 import Routes.Send.Model as Send
 import Routes.Send.Update as SendMsg
 import Session.Model as Session exposing (Network(..))
-import String exposing (fromInt)
 import Utils
 import VitePluginHelper
 
@@ -21,7 +21,8 @@ type FieldFor
 send : Session.Model -> Send.Model -> Html Msg
 send session model =
     div [ class "w-full flex flex-col justify-center items-center mt-12 gap-4" ]
-        [ div [ class "flex flex-col justify-center items-center gap-4 w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
+        [ enkryptBanner session
+        , div [ class "flex flex-col justify-center items-center gap-4 w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
             [ h1 [ class "self-start text-4xl text-[#333] font-bold" ] [ text "Send" ]
             , fromAddressField session model
             , toAddressField session model
@@ -284,9 +285,9 @@ transactionPreview session model =
                     0.0
     in
     div [ class "flex flex-row gap-4 self-start text-sm text-gray-500 font-medium" ]
-        [ div [] [text "Network fee:"]
+        [ div [] [ text "Network fee:" ]
         , div [] [ text ("~" ++ Utils.formatTokenPrice model.transactionPreview decimals (Just tokenPrice)) ]
-        , div [ class "text-gray-400"] [ text (Utils.formatTokenAmount model.transactionPreview decimals ++ " " ++ tokenSymbol) ]
+        , div [ class "text-gray-400" ] [ text (Utils.formatTokenAmount model.transactionPreview decimals ++ " " ++ tokenSymbol) ]
         ]
 
 
