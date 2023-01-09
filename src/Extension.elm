@@ -13,22 +13,30 @@ selectExtension : Model -> Html Msg
 selectExtension model =
     let
         currentExtension =
-            extensionItem (Maybe.withDefault "connect" model.extension.currentExtension)
-    in
-    div [ class "flex justify-start items-center py-2 border rounded-full" ]
-        [ div [ class "flex flex-col justify-start items-center pl-4 text-lg font-bold" ]
-            [ div [ onClick (SessionMsg Session.ToggleShowExtensions) ] [ currentExtension ]
-            , div
-                []
-                (if model.extension.showExtensions then
-                    model.extension.extensions
-                        |> List.filter (\a -> a /= Maybe.withDefault "" model.extension.currentExtension)
-                        |> List.map extensionItem
+            div [ class "flex flex-row" ]
+                [ extensionItem (Maybe.withDefault "connect" model.extension.currentExtension)
+                , img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/icons/down-chevron.svg" ] []
+                ]
 
-                 else
-                    []
-                )
+        extensionOptions =
+            if model.extension.currentExtension /= Just "connect" then
+                model.extension.extensions ++ [ "disconnect" ]
+
+            else
+                model.extension.extensions
+    in
+    div [ class "flex" ]
+        [ div
+            [ class "relative flex flex-row justify-start items-center gap-2 border p-2 rounded-full text-sm font-bold cursor-pointer"
+            , onClick (SessionMsg Session.ToggleShowExtensions)
             ]
+            [ div [] [ currentExtension ] ]
+        , if model.extension.showExtensions then
+            div [ class "absolute flex flex-col divide-y bg-white border rounded-[26px] shadow-lg" ]
+                (extensionOptions |> List.map (\e -> div [ class "w-44 py-2" ] [ extensionItem e ]))
+
+          else
+            div [] []
         ]
 
 
@@ -41,29 +49,19 @@ extensionItem extensionName =
                     ( "Enkrypt", img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/enkrypt.png" ] [] )
 
                 "polkadot-js" ->
-                    ( "Polkadot-js", img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/polkadot-js.svg" ] [] )
+                    ( "Polkadot.js", img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/polkadot-js.svg" ] [] )
 
                 "connect" ->
-                    ( "Connect", div [] [] )
+                    ( "Connect", img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/icons/connect.svg" ] [] )
+
+                "disconnect" ->
+                    ( "Disconnect", img [ class "w-6 h-6", src <| VitePluginHelper.asset "/src/assets/icons/connect.svg" ] [] )
 
                 _ ->
                     ( extensionName, div [] [] )
     in
     div
         [ onClick (SessionMsg (Session.ConnectExtension extensionName))
-        , class "flex flex-row justify-start items-center gap-2 w-40 cursor-pointer"
+        , class "flex flex-rowjustify-start items-center gap-2 min-w-[128px] pl-4 text-sm font-bold cursor-pointer"
         ]
         [ image, text name ]
-
-
-formatExtensionName : String -> String
-formatExtensionName extensionName =
-    case extensionName of
-        "enkrypt" ->
-            "Enkrypt"
-
-        "polkadot-js" ->
-            "Polkadot.js"
-
-        _ ->
-            extensionName
