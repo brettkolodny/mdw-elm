@@ -139,4 +139,6 @@ subscriptions _ =
     Sub.batch
         [ SessionUpdate.updateAccounts (SessionUpdate.UpdateAccounts >> SessionMsg)
         , SendUpdate.transactionPreview (SendUpdate.TransactionPreview >> SendMsg)
+        , SendUpdate.sendTransactionDeclined (SendUpdate.SendTransactionDeclined >> SendMsg)
+        , SendUpdate.sendTransactionSuccess (SendUpdate.SendTransactionSuccess >> SendMsg)
         ]

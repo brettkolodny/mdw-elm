@@ -1,14 +1,15 @@
 module Routes.Send.View exposing (..)
 
 import EnkryptBanner exposing (enkryptBanner)
-import Html exposing (Html, button, div, h1, img, input, text)
-import Html.Attributes exposing (class, placeholder, src, type_, value)
+import Html exposing (Html, button, div, h1, h2, img, input, span, text)
+import Html.Attributes exposing (alt, class, placeholder, src, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Msg exposing (Msg(..))
 import Round
 import Routes.Send.Model as Send
 import Routes.Send.Update as SendMsg
 import Session.Model as Session exposing (Network(..))
+import Success exposing (success)
 import Utils
 import VitePluginHelper
 
@@ -20,17 +21,25 @@ type FieldFor
 
 send : Session.Model -> Send.Model -> Html Msg
 send session model =
-    div [ class "w-full flex flex-col justify-center items-center mt-12 gap-4" ]
-        [ enkryptBanner session
-        , div [ class "flex flex-col justify-center items-center gap-4 w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
-            [ h1 [ class "self-start text-4xl text-[#333] font-bold" ] [ text "Send" ]
-            , fromAddressField session model
-            , toAddressField session model
-            , sendAmountField session model
-            , transactionPreview session model
-            , continueButton session model
+    if model.confirmed then
+        success (SendMsg SendMsg.SendAnother)
+
+    else
+        div [ class "w-full flex flex-col justify-center items-center mt-12 gap-4" ]
+            [ enkryptBanner session
+            , if model.verifyTransaction then
+                verifyTransaction session model
+
+              else
+                div [ class "flex flex-col justify-center items-center gap-4 w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
+                    [ h1 [ class "self-start text-4xl text-[#333] font-bold" ] [ text "Send" ]
+                    , fromAddressField session model
+                    , toAddressField session model
+                    , sendAmountField session model
+                    , transactionPreview session model
+                    , continueButton session model
+                    ]
             ]
-        ]
 
 
 fromAddressField : Session.Model -> Send.Model -> Html Msg
@@ -202,7 +211,7 @@ sendAmountField session model =
                 , input
                     [ class ("w-full text-4xl focus:outline-none " ++ sendCss)
                     , placeholder "0"
-                    , onInput (SendMsg.SendAmountUpdated >> SendMsg)
+                    , onInput (\str -> SendMsg (SendMsg.SendAmountUpdated str session.network.currentNetwork))
                     ]
                     []
                 , div [ class "text-4xl pr-4" ] [ text tokenSymbol ]
@@ -335,7 +344,7 @@ continueButton session model =
                     False
     in
     if fromAccountSelected && toAddressValid && sendAmountValid && not isOvermax then
-        div [ class "w-full" ]
+        div [ class "w-full", onClick (SendMsg SendMsg.ToggleVerifyTransaction) ]
             [ button [ class "w-48 h-12 text-lg font-medium bg-[#e6007a] text-white rounded-full" ]
                 [ text "Continue" ]
             ]
@@ -345,3 +354,113 @@ continueButton session model =
             [ button [ class "w-48 h-12 text-lg font-medium bg-gray-300 text-gray-400 rounded-full cursor-not-allowed" ]
                 [ text "Continue" ]
             ]
+
+
+verifyTransaction : Session.Model -> Send.Model -> Html Msg
+verifyTransaction session model =
+    let
+        ( fromAddress, fromAccountName ) =
+            case model.fromAccount of
+                Just account ->
+                    ( account.address, account.name )
+
+                _ ->
+                    ( "EfeYy93gzg9EN4HEEMvHg9yY7rpc9sTrjqnt1cbkfQAyHeD", "Name" )
+
+        ( tokenSymbol, _, networkIcon ) =
+            case session.network.currentNetwork of
+                Session.Polkadot ->
+                    ( "DOT", 10, VitePluginHelper.asset "/src/assets/polkadot-network.png" )
+
+                _ ->
+                    ( "KSM", 12, VitePluginHelper.asset "/src/assets/kusama-network.png" )
+
+        sendPrice =
+            case model.sendAmount of
+                Just amount ->
+                    Round.floor 2 (amount * tokenPrice)
+
+                _ ->
+                    "0.00"
+
+        tokenPrice =
+            case session.prices of
+                Just prices ->
+                    if tokenSymbol == "DOT" then
+                        prices.polkadot.usd
+
+                    else
+                        prices.kusama.usd
+
+                _ ->
+                    0.0
+    in
+    div [ class "flex flex-col justify-center items-center gap-4 w-full max-w-4xl bg-white p-4 rounded-xl shadow-lg" ]
+        [ div [ class "flex flex-row justify-start gap-6 w-full" ]
+            [ div
+                [ onClick (SendMsg SendMsg.ToggleVerifyTransaction)
+                , class "flex justify-center items-center w-8 h-8 rounded-lg cursor-pointer hover:bg-gray-200 transition-all"
+                ]
+                [ img
+                    [ class "self-start pt-1"
+                    , alt "back"
+                    , src <| VitePluginHelper.asset "/src/assets/icons/left-arrow.svg"
+                    ]
+                    []
+                ]
+            , div [ class "flex flex-col gap-4" ]
+                [ h1 [ class "self-start text-2xl text-[#333] font-bold" ] [ text "Verify transaction" ]
+                , h2 [ class "text-gray-500" ] [ text "Double check the information and confirm transaction." ]
+                ]
+            ]
+        , div [ class "w-full bg-gray-50 rounded-md divide-y" ]
+            [ div [ class "flex flex-row items-center gap-4 pl-4 py-4" ]
+                [ Utils.identicon fromAddress
+                , div [ class "flex flex-col items-start" ]
+                    [ div [ class "text-sm float-left" ] [ text "From" ]
+                    , div [ class "flex flex-row gap-2" ]
+                        [ div [ class "font-medium" ] [ text fromAccountName ]
+                        , div [ class "text-gray-400" ] [ text (Utils.formatAddress fromAddress) ]
+                        ]
+                    ]
+                ]
+            , div [ class "flex flex-row items-center gap-4 pl-4 py-4" ]
+                [ Utils.identicon model.toAddress
+                , div [ class "flex flex-col items-start" ]
+                    [ div [ class "text-sm float-left" ] [ text "To" ]
+                    , div [ class "flex flex-row gap-2" ]
+                        [ div [ class "font-medium" ] [ text model.toAddress ]
+                        ]
+                    ]
+                ]
+            , div [ class "pl-4 py-4" ]
+                [ div [ class "flex flex-row items-center gap-4" ]
+                    [ img [ src <| networkIcon, class "w-8 h-8" ] []
+                    , div [ class "flex flex-col" ]
+                        [ div [ class "flex flex-row gap-2 " ]
+                            [ span [ class "text-4xl font-medium" ]
+                                [ text (String.fromFloat (Maybe.withDefault 0.0 model.sendAmount)) ]
+                            , span [ class "text-2xl font-medium self-end" ] [ text tokenSymbol ]
+                            ]
+                        , div [ class "self-start text-sm text-gray-500" ] [ text ("~$" ++ sendPrice) ]
+                        ]
+                    ]
+                ]
+            , div [ class "pl-4 py-2" ] [ transactionPreview session model ]
+            ]
+        , div [ class "w-full", onClick (SendMsg (SendMsg.SendTokens session.network.currentNetwork)) ]
+            [ button [ class "w-48 h-12 text-lg font-medium bg-[#e6007a] text-white rounded-full" ]
+                [ if model.confirming then
+                    div [ class "flex justify-center items-center w-full" ]
+                        [ img
+                            [ class "w-8 h-8 animate-spin"
+                            , src <| VitePluginHelper.asset "/src/assets/icons/loading.svg"
+                            ]
+                            []
+                        ]
+
+                  else
+                    text "Confirm and send"
+                ]
+            ]
+        ]

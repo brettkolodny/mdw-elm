@@ -11,9 +11,13 @@ type alias Model =
     , showFromAddressSelection : Bool
     , sendAmount : Maybe Float
     , transactionPreview : Int
+    , verifyTransaction : Bool
+    , confirming : Bool
+    , confirmed: Bool
     }
 
 
+model : Model
 model =
     { toAddress = ""
     , fromAccount = Nothing
@@ -22,4 +26,7 @@ model =
     , showFromAddressSelection = False
     , sendAmount = Nothing
     , transactionPreview = 0
+    , verifyTransaction = False
+    , confirming = False
+    , confirmed = False
     }

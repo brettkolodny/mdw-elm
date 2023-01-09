@@ -1,7 +1,7 @@
 port module Routes.Send.Update exposing (..)
 
 import Routes.Send.Model as Send
-import Session.Model exposing (Account)
+import Session.Model exposing (Account, Network(..))
 
 
 
@@ -14,7 +14,7 @@ port sendMessage : PortMessage -> Cmd msg
 type alias PortData =
     { from : String
     , to : String
-    , amount : Float
+    , amount : Int
     }
 
 
@@ -27,6 +27,12 @@ type alias PortMessage =
 port transactionPreview : (Int -> msg) -> Sub msg
 
 
+port sendTransactionDeclined : (() -> msg) -> Sub msg
+
+
+port sendTransactionSuccess : (() -> msg) -> Sub msg
+
+
 
 -- MSG
 
@@ -37,8 +43,13 @@ type Msg
     | ToAddressSelected String
     | FromAddressSelected Account
     | ToggleFromAddressSelection
-    | SendAmountUpdated String
+    | SendAmountUpdated String Network
     | TransactionPreview Int
+    | ToggleVerifyTransaction
+    | SendTokens Network
+    | SendTransactionDeclined ()
+    | SendTransactionSuccess ()
+    | SendAnother
 
 
 
@@ -63,10 +74,18 @@ update msg model =
         ToggleFromAddressSelection ->
             ( { model | showFromAddressSelection = not model.showFromAddressSelection, showToAddressSelection = False }, Cmd.none )
 
-        SendAmountUpdated amount ->
+        SendAmountUpdated amount network ->
             let
+                decimals =
+                    case network of
+                        Polkadot ->
+                            10
+
+                        Kusama ->
+                            12
+
                 sendAmount =
-                    Maybe.withDefault 0.0 model.sendAmount
+                    round (Maybe.withDefault 0.0 model.sendAmount * (10 ^ decimals))
 
                 cmd =
                     case ( model.fromAccount, model.toAddress ) of
@@ -87,3 +106,45 @@ update msg model =
 
         TransactionPreview amount ->
             ( { model | transactionPreview = amount }, Cmd.none )
+
+        ToggleVerifyTransaction ->
+            ( { model | verifyTransaction = not model.verifyTransaction }, Cmd.none )
+
+        SendTokens network ->
+            let
+                decimals =
+                    case network of
+                        Polkadot ->
+                            10
+
+                        Kusama ->
+                            12
+
+                sendAmount =
+                    round (Maybe.withDefault 0.0 model.sendAmount * (10 ^ decimals))
+
+                cmd =
+                    case ( model.fromAccount, model.toAddress ) of
+                        ( Just acc, to ) ->
+                            if to /= "" then
+                                sendMessage
+                                    { tag = "send-tokens"
+                                    , data = { from = acc.address, to = to, amount = sendAmount }
+                                    }
+
+                            else
+                                Cmd.none
+
+                        _ ->
+                            Cmd.none
+            in
+            ( { model | confirming = True }, cmd )
+
+        SendTransactionDeclined _ ->
+            ( { model | confirming = False }, Cmd.none )
+
+        SendTransactionSuccess _ ->
+            ( { model | confirming = False, confirmed = True }, Cmd.none )
+
+        SendAnother ->
+            ( Send.model, Cmd.none )

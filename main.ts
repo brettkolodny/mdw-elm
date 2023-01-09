@@ -3,7 +3,11 @@
 import "./style.css";
 // @ts-ignore
 import { Elm } from "./src/Main.elm";
-import { web3Accounts, web3Enable } from "@polkadot/extension-dapp";
+import {
+  web3Accounts,
+  web3Enable,
+  web3FromAddress,
+} from "@polkadot/extension-dapp";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { encodeAddress } from "@polkadot/keyring";
 import "./src/customComponents/address";
@@ -15,7 +19,8 @@ import "./src/customComponents/identicon";
 type PortMsg =
   | { tag: "network-update"; data: { network: Network; extension: string } }
   | { tag: "extension-connect"; data: { extension: string } }
-  | { tag: "send-preview"; data: SendData };
+  | { tag: "send-preview"; data: SendData }
+  | { tag: "send-tokens"; data: SendData };
 
 interface AccountInfo {
   address: string;
@@ -34,6 +39,8 @@ interface ElmPorts {
   sendMessage: PortFromElm<PortMsg>;
   updateAccounts: PortToElm<AccountInfo[]>;
   transactionPreview: PortToElm<number>;
+  sendTransactionDeclined: PortToElm<null>;
+  sendTransactionSuccess: PortToElm<null>;
 }
 
 type Network = "Polkadot" | "Kusama";
@@ -111,6 +118,9 @@ const subscribeSendPort = () => {
     switch (tag) {
       case "send-preview":
         getTransactionPreview(data);
+        break;
+      case "send-tokens":
+        sendTokens(data);
         break;
       default:
         console.error("Unhandled message from send port: ", { tag, data });
@@ -206,6 +216,26 @@ const getTransactionPreview = async (sendData: SendData) => {
 
     app.ports.transactionPreview.send(info.partialFee.toJSON());
   } catch (e) {
+    console.error(e);
+  }
+};
+
+const sendTokens = async (sendData: SendData) => {
+  if (!api) {
+    console.error("Web3 API not initialized");
+    return;
+  }
+
+  try {
+    const injector = await web3FromAddress(sendData.from);
+
+    await api.tx.balances
+      .transferKeepAlive(sendData.to, sendData.amount)
+      .signAndSend(sendData.from, { signer: injector.signer });
+
+    app.ports.sendTransactionSuccess.send(null);
+  } catch (e) {
+    app.ports.sendTransactionDeclined.send(null);
     console.error(e);
   }
 };
