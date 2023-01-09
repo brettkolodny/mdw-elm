@@ -10,9 +10,9 @@ import Model exposing (Model, Page(..), Route(..))
 import Msg exposing (Msg(..))
 import NavBar exposing (navBar)
 import Network exposing (networkSelect)
+import Routes.Overview.Model as OverviewModel
 import Routes.Overview.Update as OverviewUpdate
 import Routes.Overview.View exposing (accounts)
-import Routes.Send.Model as SendModel
 import Routes.Send.Update as SendUpdate
 import Routes.Send.View exposing (send)
 import Session.Model exposing (Network(..), Prices, Usd)
@@ -38,7 +38,7 @@ init extensions =
             }
       , route = AccountsRoute
       , page =
-            Send SendModel.model
+            Overview OverviewModel.model
       }
     , Http.get
         { url = "https://api.coingecko.com/api/v3/simple/price?ids=polkadot%2Ckusama&vs_currencies=usd"
@@ -99,6 +99,9 @@ update msg model =
 
                 Err _ ->
                     ( model, Cmd.none )
+
+        ChangePage page ->
+            ( { model | page = page }, Cmd.none )
 
 
 view : Model -> Html Msg
