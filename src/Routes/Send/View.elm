@@ -45,6 +45,14 @@ send session model =
 fromAddressField : Session.Model -> Send.Model -> Html Msg
 fromAddressField session model =
     let
+        ( tokenSymbol, decimals ) =
+            case session.network.currentNetwork of
+                Session.Polkadot ->
+                    ( "DOT", 10 )
+
+                _ ->
+                    ( "KSM", 12 )
+
         fromAddressValid =
             case model.fromAccount of
                 Just account ->
@@ -53,13 +61,22 @@ fromAddressField session model =
                 _ ->
                     False
 
-        fromAddress =
+        ( fromName, fromAddress, balance ) =
             case model.fromAccount of
                 Just account ->
-                    account.address
+                    let
+                        accountBalance =
+                            case account.balance of
+                                Just b ->
+                                    Utils.formatTokenAmount b.available decimals
+
+                                _ ->
+                                    "~"
+                    in
+                    ( account.name, account.address, accountBalance )
 
                 _ ->
-                    ""
+                    ( "", "", "" )
 
         fromAddressIdenticon =
             if fromAddressValid then
@@ -80,8 +97,13 @@ fromAddressField session model =
                 , div []
                     [ div []
                         [ case model.fromAccount of
-                            Just account ->
-                                text account.address
+                            Just _ ->
+                                div [ class "flex flex-row gap-2" ]
+                                    [ span [ class "font-medium" ] [ text fromName ]
+                                    , span [ class "text-gray-500" ] [ text (Utils.formatAddress fromAddress) ]
+                                    , span [ class "flex flex-row gap-1 text-gray-500" ]
+                                        [ span [ class "" ] [ text balance ], span [] [ text tokenSymbol ] ]
+                                    ]
 
                             _ ->
                                 text "Select an account to send from"
