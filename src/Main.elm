@@ -2,8 +2,8 @@ module Main exposing (main)
 
 import Browser
 import Extension exposing (selectExtension)
-import Html exposing (Html, div)
-import Html.Attributes exposing (class)
+import Html exposing (Html, a, div, img)
+import Html.Attributes exposing (class, src, href)
 import Http
 import Json.Decode exposing (Decoder, field, float, map, map2)
 import Model exposing (Model, Page(..), Route(..))
@@ -17,6 +17,7 @@ import Routes.Send.Update as SendUpdate
 import Routes.Send.View exposing (send)
 import Session.Model exposing (Network(..), Prices, Usd)
 import Session.Update as SessionUpdate
+import VitePluginHelper
 
 
 main : Program (List String) Model Msg
@@ -117,9 +118,12 @@ view model =
     in
     div [ class "flex flex-col justify-center items-center" ]
         [ div [ class "absolute flex flex-row justify-center items-center h-24 w-screen top-0 left-0 " ]
-            [ div [ class "flex flex-row justify-end w-full max-w-5xl gap-6 mt-4" ]
-                [ networkSelect model.session.network
-                , selectExtension model.session
+            [ div [ class "flex flex-row justify-between w-full px-16 gap-6 mt-4" ]
+                [ a [ href "/" ] [ img [ src <| VitePluginHelper.asset "/src/assets/MyDotWallet.svg" ] [] ]
+                , div [ class "flex flex-row gap-4" ]
+                    [ networkSelect model.session.network
+                    , selectExtension model.session
+                    ]
                 ]
             ]
         , div [ class "flex flex-row w-full" ] [ navBar model, page ]
