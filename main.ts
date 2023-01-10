@@ -10,7 +10,6 @@ import {
 } from "@polkadot/extension-dapp";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { encodeAddress } from "@polkadot/keyring";
-import Types from "@polkadot/api/types";
 import "./src/customComponents/address";
 import "./src/customComponents/downloadEnkrypt";
 import "./src/customComponents/identicon";
@@ -84,6 +83,7 @@ const elmInit = async () => {
   const currentExtension = getLastExtension() ?? "connect";
 
   if (process.env.NODE_ENV === "development") {
+    //@ts-ignore
     const ElmDebugTransform = await import("elm-debug-transformer");
 
     ElmDebugTransform.register({

@@ -210,7 +210,7 @@ view model =
     in
     { title = "MyDotWallet"
     , body =
-        [ div [ class "flex flex-col justify-center items-center" ]
+        [ div [ class "flex flex-col justify-start items-center bg-[#faf9f9] min-h-screen" ]
             [ div [ class "absolute flex flex-row justify-center items-center h-24 w-screen top-0 left-0 " ]
                 [ div [ class "flex flex-row justify-between w-full px-16 gap-6 mt-4" ]
                     [ a [ href "/" ] [ img [ src <| VitePluginHelper.asset "/src/assets/MyDotWallet.svg" ] [] ]
