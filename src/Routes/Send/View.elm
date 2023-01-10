@@ -21,8 +21,17 @@ type FieldFor
 
 send : Session.Model -> Send.Model -> Html Msg
 send session model =
+    let
+        path =
+            case model.fromAccount of
+                Just account ->
+                    "/send/?q=" ++ account.address
+
+                _ ->
+                    "/send"
+    in
     if model.confirmed then
-        success (SendMsg SendMsg.SendAnother)
+        success path
 
     else
         div [ class "w-full flex flex-col justify-center items-center mt-12 gap-4" ]
