@@ -1,14 +1,13 @@
 module Routes.Overview.View exposing (..)
 
 import EnkryptBanner exposing (enkryptBanner)
-import Html exposing (Html, div, img, text)
-import Html.Attributes exposing (class, src)
+import Html exposing (Html, a, div, img, text)
+import Html.Attributes exposing (class, href, src)
 import Html.Events exposing (onClick)
 import Model exposing (Page(..))
 import Msg exposing (Msg(..))
 import Routes.Overview.Model exposing (Model)
 import Routes.Overview.Update as Overview
-import Routes.Send.Model as SendModel
 import Session.Model as Session exposing (Account, Network(..))
 import Utils exposing (addressCutOffElement, formatTokenAmount, formatTokenPrice, identicon)
 import VitePluginHelper
@@ -74,9 +73,9 @@ accounts session model =
                     ]
                 , div [ class "flex flex-row gap-4" ]
                     [ div [ class "px-4 py-1 text-gray-900 border rounded-full cursor-pointer" ] [ text "Stake" ]
-                    , div
+                    , a
                         [ class "px-4 py-1 text-gray-900 border rounded-full cursor-pointer"
-                        , onClick (ChangePage (Send SendModel.model))
+                        , href "/send"
                         ]
                         [ text "Send" ]
                     ]
@@ -160,9 +159,9 @@ accountExpanded account network price =
             , div [ class "flex flex-row items-start" ] [ text (formatTokenAmount (Maybe.withDefault defaultBalance account.balance).available decimals ++ " " ++ tokenSymbol) ]
             , div [ class "flex flex-row gap-2" ]
                 [ div [ class "px-4 py-1 text-gray-900 border rounded-full cursor-pointer" ] [ text "Stake" ]
-                , div
+                , a
                     [ class "px-4 py-1 text-gray-900 border rounded-full cursor-pointer"
-                    , onClick (ChangePage (Send SendModel.model))
+                    , href ("/send/?q=" ++ account.address)
                     ]
                     [ text "Send" ]
                 ]

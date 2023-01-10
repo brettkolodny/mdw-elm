@@ -7,6 +7,7 @@ import Html exposing (a, div, img)
 import Html.Attributes exposing (class, href, src)
 import Http
 import Json.Decode exposing (Decoder, field, float, map, map2)
+import List.Extra
 import Model exposing (Model, Page(..), Route(..))
 import Msg exposing (Msg(..))
 import NavBar exposing (navBar)
@@ -17,10 +18,11 @@ import Routes.Overview.View exposing (accounts)
 import Routes.Send.Model as SendModel
 import Routes.Send.Update as SendUpdate
 import Routes.Send.View exposing (send)
-import Session.Model exposing (Network(..), Prices, Usd)
+import Session.Model exposing (Account, Network(..), Prices, Usd)
 import Session.Update as SessionUpdate
 import Url exposing (Url)
-import Url.Parser as UrlParser exposing ((</>), Parser, int, oneOf, s, string)
+import Url.Parser as UrlParser exposing ((</>), (<?>), Parser, oneOf, s)
+import Url.Parser.Query as Query
 import VitePluginHelper
 
 
@@ -39,27 +41,8 @@ main =
 init : List String -> Url -> Key -> ( Model, Cmd Msg )
 init extensions url key =
     let
-        route =
-            case UrlParser.parse routeParser url of
-                Just AccountsRoute ->
-                    AccountsRoute
-
-                Just SendRoute ->
-                    SendRoute
-
-                _ ->
-                    AccountsRoute
-
-        page =
-            case route of
-                AccountsRoute ->
-                    Overview OverviewModel.model
-
-                SendRoute ->
-                    Send SendModel.model
-
-                _ ->
-                    Overview OverviewModel.model
+        ( page, route ) =
+            getPageAndRoute url []
     in
     ( { session =
             { accounts = []
@@ -154,27 +137,8 @@ update msg model =
 
         UrlChanged url ->
             let
-                route =
-                    case UrlParser.parse routeParser url of
-                        Just AccountsRoute ->
-                            AccountsRoute
-
-                        Just SendRoute ->
-                            SendRoute
-
-                        _ ->
-                            AccountsRoute
-
-                page =
-                    case route of
-                        AccountsRoute ->
-                            Overview OverviewModel.model
-
-                        SendRoute ->
-                            Send SendModel.model
-
-                        _ ->
-                            Overview OverviewModel.model
+                ( page, route ) =
+                    getPageAndRoute url model.session.accounts
             in
             ( { model | url = url, route = route, page = page }
             , Cmd.none
@@ -187,6 +151,43 @@ update msg model =
 
                 Browser.External href ->
                     ( model, Nav.load href )
+
+
+getPageAndRoute : Url -> List Account -> ( Page, Route )
+getPageAndRoute url accounts =
+    let
+        route =
+            case UrlParser.parse routeParser url of
+                Just AccountsRoute ->
+                    AccountsRoute
+
+                Just (SendRoute from) ->
+                    SendRoute from
+
+                _ ->
+                    AccountsRoute
+
+        page =
+            case route of
+                AccountsRoute ->
+                    Overview OverviewModel.model
+
+                SendRoute from ->
+                    let
+                        account =
+                            List.Extra.find
+                                (\e -> e.address == Maybe.withDefault "" from)
+                                accounts
+
+                        sendModel =
+                            SendModel.model
+                    in
+                    Send { sendModel | fromAccount = account }
+
+                _ ->
+                    Overview OverviewModel.model
+    in
+    ( page, route )
 
 
 view : Model -> Browser.Document Msg
@@ -222,7 +223,7 @@ routeParser : Parser (Route -> a) a
 routeParser =
     oneOf
         [ UrlParser.map AccountsRoute (s "")
-        , UrlParser.map SendRoute (s "send")
+        , UrlParser.map SendRoute (s "send" <?> Query.string "q")
         ]
 
 

@@ -9,7 +9,7 @@ import Url exposing (Url)
 
 type Route
     = AccountsRoute
-    | SendRoute
+    | SendRoute (Maybe String)
     | NotFoundRoute
 
 
