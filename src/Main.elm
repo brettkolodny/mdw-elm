@@ -26,7 +26,7 @@ import Url.Parser.Query as Query
 import VitePluginHelper
 
 
-main : Program (List String) Model Msg
+main : Program { extensions : List String, currentExtension : String } Model Msg
 main =
     Browser.application
         { init = init
@@ -38,19 +38,26 @@ main =
         }
 
 
-init : List String -> Url -> Key -> ( Model, Cmd Msg )
-init extensions url key =
+init : { extensions : List String, currentExtension : String } -> Url -> Key -> ( Model, Cmd Msg )
+init flags url key =
     let
         ( page, route ) =
             getPageAndRoute url []
+
+        currentExtension =
+            if List.member flags.currentExtension flags.extensions then
+                Just flags.currentExtension
+
+            else
+                Nothing
     in
     ( { session =
             { accounts = []
             , network = { currentNetwork = Polkadot, showNetworks = False }
             , prices = Nothing
             , extension =
-                { extensions = extensions
-                , currentExtension = Nothing
+                { extensions = flags.extensions
+                , currentExtension = currentExtension
                 , showExtensions = False
                 }
             }

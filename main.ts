@@ -51,6 +51,16 @@ interface SendData {
   amount: number;
 }
 
+// STORAGE --------------------------------------------------------------------
+
+const setLastExtension = (extensionName: string) => {
+  window.localStorage.setItem("extension", extensionName);
+};
+
+const getLastExtension = () => {
+  return window.localStorage.getItem("extension");
+};
+
 // GLOBAL STATE ---------------------------------------------------------------
 
 let app: ElmApp<ElmPorts>;
@@ -61,6 +71,7 @@ let api: ApiPromise | undefined;
 
 const elmInit = async () => {
   const extensions = (await connectWallet()).map((extension) => extension.name);
+  const currentExtension = getLastExtension() ?? "connect";
 
   if (process.env.NODE_ENV === "development") {
     const ElmDebugTransform = await import("elm-debug-transformer");
@@ -71,7 +82,10 @@ const elmInit = async () => {
   }
 
   const root = document.querySelector("#app div");
-  app = Elm.Main.init({ node: root, flags: extensions });
+  app = Elm.Main.init({
+    node: root,
+    flags: { extensions, currentExtension: currentExtension },
+  });
 
   subscribeSessionPort();
   subscribeSendPort();
@@ -105,6 +119,7 @@ const subscribeSessionPort = () => {
 
         break;
       case "extension-connect":
+        setLastExtension(data.extension);
         getAccountInfo(data.extension, undefined);
         break;
       default:
@@ -249,6 +264,12 @@ const main = async () => {
   await elmInit();
 
   await web3Init(undefined);
+
+  const lastExtension = getLastExtension();
+
+  if (lastExtension) {
+    getAccountInfo(lastExtension, undefined);
+  }
 };
 
 main();
