@@ -4,6 +4,7 @@ import EnkryptBanner exposing (enkryptBanner)
 import Html exposing (Html, a, div, img, text)
 import Html.Attributes exposing (class, href, src)
 import Html.Events exposing (onClick)
+import Maybe.Extra
 import Model exposing (Page(..))
 import Msg exposing (Msg(..))
 import Routes.Overview.Model exposing (Model)
@@ -115,7 +116,17 @@ accountItem network price model account =
             [ div [ class "flex flex-row justify-center items-center gap-4" ]
                 [ identicon account.address
                 , div [ class "flex flex-col justify-center items-start" ]
-                    [ div [ class "text-black font-medium" ] [ text account.name ]
+                    [ div [ class "flex flex-row gap-2" ]
+                        [ div [ class "text-black font-medium" ] [ text account.name ]
+                        , if Maybe.Extra.isJust account.identity then
+                            div [ class "flex flex-row items-center gap-1" ]
+                                [ img [ src <| VitePluginHelper.asset "/src/assets/icons/profile.svg", class "w-4 h-4" ] []
+                                , div [ class "text-gray-600" ] [ text (Maybe.withDefault "" account.identity) ]
+                                ]
+
+                          else
+                            div [] []
+                        ]
                     , div [ class "text-sm" ] [ addressCutOffElement netString account.address ]
                     ]
                 ]

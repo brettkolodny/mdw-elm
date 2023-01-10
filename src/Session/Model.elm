@@ -11,6 +11,7 @@ type alias Account =
     { address : String
     , name : String
     , balance : Maybe Balance
+    , identity : Maybe String
     }
 
 

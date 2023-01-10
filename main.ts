@@ -10,6 +10,7 @@ import {
 } from "@polkadot/extension-dapp";
 import { ApiPromise, WsProvider } from "@polkadot/api";
 import { encodeAddress } from "@polkadot/keyring";
+import Types from "@polkadot/api/types";
 import "./src/customComponents/address";
 import "./src/customComponents/downloadEnkrypt";
 import "./src/customComponents/identicon";
@@ -27,6 +28,7 @@ interface AccountInfo {
   name: string;
   show: boolean;
   balance: Balance | null;
+  identity: string | null;
 }
 
 interface Balance {
@@ -49,6 +51,14 @@ interface SendData {
   from: string;
   to: string;
   amount: number;
+}
+
+interface Identity {
+  info?: {
+    display?: {
+      Raw: string;
+    };
+  };
 }
 
 // STORAGE --------------------------------------------------------------------
@@ -181,41 +191,53 @@ const getAccountInfo = async (
       name: acc.meta.name ?? "",
       show: false,
       balance: null,
+      identity: null,
     };
   });
 
   app.ports.updateAccounts.send(allAccounts);
 
-  const balancePromises = allAccounts.map((account) => {
-    return api!.query.system.account(account.address);
-  });
+  // Separately query the account balances and identities so the UI doesn't
+  // need to wait for the queries to finish.
 
-  const balances = await Promise.all(balancePromises);
+  const accountAddresses = accounts.map((acc) => acc.address);
 
-  const stakingPromises = allAccounts.map((account) => {
-    return api!.query.staking.ledger(account.address);
-  });
+  const balances = await api!.query.system.account.multi(accountAddresses);
 
-  const staking = await Promise.all(stakingPromises);
+  const staking = await api!.query.staking.ledger.multi(accountAddresses);
 
-  const accountsWithBalances = allAccounts.map((account, index) => {
-    const staked = staking[index].toJSON();
+  const identities = await api!.query.identity.identityOf.multi(
+    accountAddresses
+  );
 
-    let stakedAmount = 0;
+  const accountsWithBalancesAndIdentities = allAccounts.map(
+    (account, index) => {
+      const staked = staking[index].toJSON();
 
-    if (staked) {
-      stakedAmount = (staked as any).total;
+      let stakedAmount = 0;
+
+      if (staked) {
+        stakedAmount = (staked as any).total;
+      }
+
+      const accountBalance = {
+        available: (balances[index] as any).data.free.toNumber(),
+        staked: stakedAmount,
+      };
+
+      const identity = identities[index].toHuman() as Identity;
+
+      let identityRaw: string | null = null;
+
+      if (identity) {
+        identityRaw = identity.info?.display?.Raw ?? null;
+      }
+
+      return { ...account, balance: accountBalance, identity: identityRaw };
     }
+  );
 
-    const accountBalance = {
-      available: (balances[index] as any).data.free.toNumber(),
-      staked: stakedAmount,
-    };
-
-    return { ...account, balance: accountBalance };
-  });
-
-  app.ports.updateAccounts.send(accountsWithBalances);
+  app.ports.updateAccounts.send(accountsWithBalancesAndIdentities);
 };
 
 const getTransactionPreview = async (sendData: SendData) => {
