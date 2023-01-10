@@ -366,13 +366,13 @@ continueButton session model =
                     False
     in
     if fromAccountSelected && toAddressValid && sendAmountValid && not isOvermax then
-        div [ class "w-full", onClick (SendMsg SendMsg.ToggleVerifyTransaction) ]
+        div [ class "flex justify-center items-center w-full", onClick (SendMsg SendMsg.ToggleVerifyTransaction) ]
             [ button [ class "w-48 h-12 text-lg font-medium bg-[#e6007a] text-white rounded-full" ]
                 [ text "Continue" ]
             ]
 
     else
-        div [ class "w-full" ]
+        div [ class "flex justify-center items-center w-full" ]
             [ button [ class "w-48 h-12 text-lg font-medium bg-gray-300 text-gray-400 rounded-full cursor-not-allowed" ]
                 [ text "Continue" ]
             ]
@@ -470,7 +470,7 @@ verifyTransaction session model =
                 ]
             , div [ class "pl-4 py-2" ] [ transactionPreview session model ]
             ]
-        , div [ class "w-full", onClick (SendMsg (SendMsg.SendTokens session.network.currentNetwork)) ]
+        , div [ class "flex justify-center items-center w-full", onClick (SendMsg (SendMsg.SendTokens session.network.currentNetwork)) ]
             [ button [ class "w-48 h-12 text-lg font-medium bg-[#e6007a] text-white rounded-full" ]
                 [ if model.confirming then
                     div [ class "flex justify-center items-center w-full" ]
